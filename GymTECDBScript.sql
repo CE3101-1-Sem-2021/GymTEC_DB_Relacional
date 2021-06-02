@@ -1,0 +1,179 @@
+
+
+
+
+
+
+
+INSERT INTO Administrador(Email,Nombre,Apellidos,Contraseña,Salt,Token) VALUES('dcamachog99@gmail.com','Daniel','Camacho Gonzalez','1234','1234','1234');
+
+SELECT * FROM Administrador;
+
+CREATE TABLE Administrador
+(
+	Id INT IDENTITY(1,1) PRIMARY KEY,
+	Email VARCHAR(50) NOT NULL UNIQUE,
+	Nombre VARCHAR(20) NOT NULL,
+	Apellidos VARCHAR(45) NOT NULL,
+	Contraseña VARCHAR(50) NOT NULL,
+	Salt VARCHAR(32) NOT NULL,
+	Token VARCHAR(32) NOT NULL UNIQUE
+);
+
+CREATE TABLE Empleado
+(
+	Cedula VARCHAR(20) PRIMARY KEY,
+	Puesto VARCHAR(25) NOT NULL DEFAULT 'Sin Asignar',
+	Planilla VARCHAR(25) NOT NULL DEFAULT 'Sin Asignar',
+	Distrito VARCHAR(25) NOT NULL,
+	Canton VARCHAR(25) NOT NULL,
+	Provincia VARCHAR(25) NOT NULL,
+	Sucursal VARCHAR(20),
+	Nombre VARCHAR(20) NOT NULL,
+	Apellidos VARCHAR(45) NOT NULL,
+	Salario NUMERIC(7,2) NOT NULL,
+	Email VARCHAR(50) NOT NULL UNIQUE,
+	Contraseña VARCHAR(50) NOT NULL,
+	Salt VARCHAR(32) NOT NULL,
+	Token VARCHAR(32) NOT NULL UNIQUE
+);
+
+CREATE TABLE Sucursal
+(
+	Nombre VARCHAR(20) PRIMARY KEY,
+	Distrito VARCHAR(25) NOT NULL,
+	Canton VARCHAR(25) NOT NULL,
+	Provincia VARCHAR(25) NOT NULL,
+	Fecha_Apertura DATE NOT NULL,
+	Capacidad_Max INT NOT NULL,
+	Gerente VARCHAR(20),
+	Tienda_Act BIT DEFAULT 0,
+	Spa_Act BIT DEFAULT 0
+);
+
+CREATE TABLE Clase
+(
+	Id INT IDENTITY(1,1) PRIMARY KEY, 
+	Hora_Inicio TIME(0),
+	Fecha DATE,
+	Tipo_Servicio VARCHAR(25) NOT NULL,
+	Hora_Final TIME(0) NOT NULL,
+	Sucursal VARCHAR(20) NOT NULL,
+	Instructor VARCHAR(20),
+	Modalidad VARCHAR(10) NOT NULL,
+	Capacidad INT NOT NULL
+);
+
+CREATE TABLE Maquina
+(
+	Serial VARCHAR(50) PRIMARY KEY,
+	Tipo_Equipo VARCHAR(25) NOT NULL,
+	Sucursal VARCHAR(20),
+	Marca VARCHAR(30) NOT NULL,
+	Costo NUMERIC(7,2) NOT NULL
+);
+
+CREATE TABLE Producto
+(
+	Codigo_Barras VARCHAR(50) PRIMARY KEY,
+	Nombre VARCHAR(25) NOT NULL,
+	Descripcion VARCHAR(300) NOT NULL,
+	Costo NUMERIC(7,2)
+);
+
+CREATE TABLE Tratamiento_Spa
+(
+	Id INT IDENTITY(1,1) PRIMARY KEY,
+	Nombre VARCHAR(25) NOT NULL
+);
+
+CREATE TABLE Direccion
+(
+	Distrito VARCHAR(25),
+	Canton VARCHAR(25),
+	Provincia VARCHAR(25),
+	PRIMARY KEY(Provincia,Canton,Distrito)
+);
+
+CREATE TABLE Puesto
+(
+	Nombre VARCHAR(25) PRIMARY KEY,
+	Descripcion VARCHAR(200) NOT NULL
+);
+
+CREATE TABLE Planilla
+(
+	Nombre VARCHAR(25) PRIMARY KEY,
+	Descripcion VARCHAR(200) NOT NULL
+);
+
+CREATE TABLE Producto_Sucursal
+(
+	Codigo_Barras_Prod VARCHAR(50),
+	Sucursal VARCHAR(20),
+	PRIMARY KEY(Codigo_Barras_Prod,Sucursal)
+);
+
+CREATE TABLE Cliente_Clase
+(
+	Id INT PRIMARY KEY,
+	Hora_Inicio_Clase TIME,
+	Fecha_Clase DATE,
+	Tipo_Clase VARCHAR(25),
+	Cliente VARCHAR(20),
+);
+
+CREATE TABLE Instructor_Clase
+(
+	Clase_Id INT PRIMARY KEY,
+	Instructor_Id VARCHAR(20)
+);
+
+CREATE TABLE Tratamiento_Sucursal
+(
+	Id_Tratamiento INT,
+	Sucursal VARCHAR(20),
+	PRIMARY KEY(Id_Tratamiento,Sucursal)
+);
+
+CREATE TABLE Tipo_Equipo
+(
+	Nombre VARCHAR(25) PRIMARY KEY,
+	Descripcion VARCHAR(200) NOT NULL
+);
+
+CREATE TABLE Tipo_Servicio
+(
+	Nombre VARCHAR(25) PRIMARY KEY,
+	Descripcion VARCHAR(200) NOT NULL
+);
+
+ALTER TABLE Empleado ADD CONSTRAINT FKPuesto_Empleado FOREIGN KEY(Puesto) REFERENCES Puesto(Nombre) ON UPDATE CASCADE ON DELETE SET DEFAULT;
+ALTER TABLE Empleado ADD CONSTRAINT FKPlanilla_Empleado FOREIGN KEY(Planilla) REFERENCES Planilla(Nombre) ON UPDATE CASCADE ON DELETE SET DEFAULT;
+ALTER TABLE Empleado ADD CONSTRAINT FKDireccion_Empleado FOREIGN KEY(Provincia,Canton,Distrito) REFERENCES Direccion(Provincia,Canton,Distrito);
+ALTER TABLE Empleado ADD CONSTRAINT FKSucursal_Empleado FOREIGN KEY(Sucursal) REFERENCES Sucursal(Nombre) ON UPDATE CASCADE ON DELETE SET NULL;
+
+ALTER TABLE Sucursal ADD CONSTRAINT FKDireccion_Sucursal FOREIGN KEY(Provincia,Canton,Distrito) REFERENCES Direccion(Provincia,Canton,Distrito);
+ALTER TABLE Sucursal ADD CONSTRAINT FKGerente_Sucursal FOREIGN KEY (Gerente) REFERENCES Empleado(Cedula);-------> CREAR TRIGGER QUE SUSTITUYA ESTE CONSTRAINT(ON DELETE SET NULL ON UPDATE CASCADE)
+
+ALTER TABLE Maquina ADD CONSTRAINT FKTipoEquipo_Maquina FOREIGN KEY(Tipo_Equipo) REFERENCES Tipo_Equipo(Nombre) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE Maquina ADD CONSTRAINT FKSucursal_Maquina FOREIGN KEY (Sucursal) REFERENCES Sucursal(Nombre) ON UPDATE CASCADE ON DELETE SET NULL;
+
+ALTER TABLE Clase ADD CONSTRAINT FKTipoServicio_Clase FOREIGN KEY(Tipo_Servicio) REFERENCES Tipo_Servicio(Nombre) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE Clase ADD CONSTRAINT FKSucursal_Clase FOREIGN KEY(Sucursal) REFERENCES Sucursal(Nombre) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE Clase ADD CONSTRAINT FKInstructor_Clase FOREIGN KEY(Instructor) REFERENCES Empleado(Cedula) ;-------> CREAR TRIGGER QUE SUSTITUYA ESTE CONSTRAINT( ON UPDATE CASCADE ON DELETE SET NULL)
+
+ALTER TABLE Producto_Sucursal ADD CONSTRAINT FKProducto_ProdSuc FOREIGN KEY(Codigo_Barras_Prod) REFERENCES Producto(Codigo_Barras) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE Producto_Sucursal ADD CONSTRAINT FKSucursal_ProdSuc FOREIGN KEY (Sucursal) REFERENCES Sucursal(Nombre) ON UPDATE CASCADE ON DELETE CASCADE;
+
+ALTER TABLE Tratamiento_Sucursal ADD CONSTRAINT FKIdTrat_TratSuc FOREIGN KEY(Id_Tratamiento) REFERENCES Tratamiento_Spa(Id) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE Tratamiento_Sucursal ADD CONSTRAINT FKSucursal_TratSuc FOREIGN KEY(Sucursal) REFERENCES Sucursal(Nombre) ON UPDATE CASCADE ON DELETE CASCADE;
+
+ALTER TABLE Cliente_Clase ADD CONSTRAINT FKClase_ClientClase FOREIGN KEY (Id) REFERENCES Clase(Id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+CREATE PROCEDURE selectAllAdmins
+AS
+SELECT * FROM Administrador
+GO;
+
+EXEC selectAllAdmins;
