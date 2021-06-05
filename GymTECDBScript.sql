@@ -1,13 +1,16 @@
+--SELECT * FROM Administrador;
+--SELECT * FROM Puesto;
+--SELECT * FROM Planilla;
+--SELECT * FROM Tipo_Equipo;
+--SELECT * FROM Tipo_Servicio;
+--SELECT * FROM Tratamiento_Spa;
+--SELECT * FROM Direccion;
+--SELECT * FROM Empleado;
+--SELECT * FROM Sucursal;
 
 
 
 
-
-
-
-INSERT INTO Administrador(Email,Nombre,Apellidos,Contraseña,Salt,Token) VALUES('dcamachog99@gmail.com','Daniel','Camacho Gonzalez','1234','1234','1234');
-
-SELECT * FROM Administrador;
 
 CREATE TABLE Administrador
 (
@@ -123,12 +126,6 @@ CREATE TABLE Cliente_Clase
 	Cliente VARCHAR(20),
 );
 
-CREATE TABLE Instructor_Clase
-(
-	Clase_Id INT PRIMARY KEY,
-	Instructor_Id VARCHAR(20)
-);
-
 CREATE TABLE Tratamiento_Sucursal
 (
 	Id_Tratamiento INT,
@@ -170,10 +167,130 @@ ALTER TABLE Tratamiento_Sucursal ADD CONSTRAINT FKIdTrat_TratSuc FOREIGN KEY(Id_
 ALTER TABLE Tratamiento_Sucursal ADD CONSTRAINT FKSucursal_TratSuc FOREIGN KEY(Sucursal) REFERENCES Sucursal(Nombre) ON UPDATE CASCADE ON DELETE CASCADE;
 
 ALTER TABLE Cliente_Clase ADD CONSTRAINT FKClase_ClientClase FOREIGN KEY (Id) REFERENCES Clase(Id) ON UPDATE CASCADE ON DELETE CASCADE;
+GO
 
+--Stored Procedure para obtener todos los administradores;
 CREATE PROCEDURE selectAllAdmins
 AS
 SELECT * FROM Administrador
-GO;
+GO
 
-EXEC selectAllAdmins;
+--Stored procedure para poder insertar un nuevo administrador
+CREATE PROCEDURE insertAdmin
+@Email VARCHAR(50),
+@Nombre VARCHAR(20),
+@Apellidos VARCHAR(45),
+@Contraseña VARCHAR(50),
+@Salt VARCHAR(32),
+@Token VARCHAR(32)
+AS
+BEGIN
+INSERT INTO Administrador(Email,Nombre,Apellidos,Contraseña,Salt,Token) VALUES(@Email,@Nombre,@Apellidos,@Contraseña,@Salt,@Token)
+END
+GO
+
+
+--Stored procedure para poder insertar un nuevo empleado
+CREATE PROCEDURE insertEmployee
+@Cedula VARCHAR(20),
+@Puesto VARCHAR(25),
+@Planilla VARCHAR(25),
+@Distrito VARCHAR(25),
+@Canton VARCHAR(25),
+@Provincia VARCHAR(25),
+@Sucursal VARCHAR(20),
+@Nombre VARCHAR(20),
+@Apellidos VARCHAR(45),
+@Salario NUMERIC(7,2),
+@Email VARCHAR(50),
+@Contraseña VARCHAR(50),
+@Salt VARCHAR(32),
+@Token VARCHAR(32)
+AS
+BEGIN
+
+IF @Puesto IS NULL
+	SET @Puesto='Sin Asignar'
+IF @Planilla IS NULL
+	SET @Planilla='Sin Asignar'
+
+INSERT INTO Empleado(Cedula,Puesto,Planilla,Distrito,Canton,Provincia,Sucursal,Nombre,Apellidos,Salario,Email,Contraseña,Salt,Token) VALUES(@Cedula,@Puesto,@Planilla,@Distrito,@Canton,@Provincia,@Sucursal,@Nombre,@Apellidos,@Salario,@Email,@Contraseña,@Salt,@Token)
+END
+GO
+
+--Stored procedure para poder insertar un nuevo gimnasio
+CREATE PROCEDURE insertGym
+@Nombre VARCHAR(20),
+@Distrito VARCHAR(25),
+@Canton VARCHAR(25),
+@Provincia VARCHAR(25),
+@Fecha_Apertura DATE,
+@Capacidad_Max INT,
+@Gerente VARCHAR(20)
+AS
+BEGIN
+
+INSERT INTO Sucursal(Nombre,Distrito,Canton,Provincia,Fecha_Apertura,Capacidad_Max,Gerente) VALUES(@Nombre,@Distrito,@Canton,@Provincia,@Fecha_Apertura,@Capacidad_Max,@Gerente)
+
+END
+GO
+
+--Stored Procedure para obtener todos los gimnasios;
+CREATE PROCEDURE selectAllGyms
+AS
+SELECT * FROM Sucursal
+GO
+
+
+--Stored procedure para obtener un empleado por su cedula
+CREATE PROCEDURE getEmployeeById
+@Cedula VARCHAR(20)
+AS
+BEGIN
+
+SELECT * FROM Empleado WHERE Cedula=@Cedula;
+
+END
+GO
+
+--Stored procedure para obtener un empleado por su email
+CREATE PROCEDURE getEmployeeByMail
+@Email VARCHAR(50)
+AS
+BEGIN
+
+SELECT * FROM Empleado WHERE Email=@Email;
+
+END
+GO
+
+--Stored procedure para obtener un administrador por su email
+CREATE PROCEDURE getAdminByMail
+@Email VARCHAR(50)
+AS
+BEGIN
+
+SELECT * FROM Administrador WHERE Email=@Email;
+
+END
+GO
+
+--Stored procedure para asignar un token a un empleado
+CREATE PROCEDURE assignTokenEmployee
+@Token VARCHAR(32),
+@Id VARCHAR(20)
+AS
+BEGIN
+	UPDATE Empleado SET Token=@Token WHERE Cedula=@Id
+END
+GO
+
+--Stored procedure para asignar un token a un administrador
+CREATE PROCEDURE assignTokenAdmin
+@Token VARCHAR(32),
+@Id INT
+AS
+BEGIN
+	UPDATE Administrador SET Token=@Token WHERE Id=@Id
+END
+GO
