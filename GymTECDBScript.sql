@@ -116,6 +116,11 @@ CREATE TABLE Producto_Sucursal
 	Sucursal VARCHAR(20),
 	PRIMARY KEY(Codigo_Barras_Prod,Sucursal)
 );
+CREATE TABLE Sucursal_Telefono
+(
+	Telefono VARCHAR(20) PRIMARY KEY,
+	Sucursal VARCHAR(20) NOT NULL
+);
 
 CREATE TABLE Cliente_Clase
 (
@@ -167,6 +172,8 @@ ALTER TABLE Tratamiento_Sucursal ADD CONSTRAINT FKIdTrat_TratSuc FOREIGN KEY(Id_
 ALTER TABLE Tratamiento_Sucursal ADD CONSTRAINT FKSucursal_TratSuc FOREIGN KEY(Sucursal) REFERENCES Sucursal(Nombre) ON UPDATE CASCADE ON DELETE CASCADE;
 
 ALTER TABLE Cliente_Clase ADD CONSTRAINT FKClase_ClientClase FOREIGN KEY (Id) REFERENCES Clase(Id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+ALTER TABLE Sucursal_Telefono ADD CONSTRAINT FKSucursal_Telefono FOREIGN KEY (Sucursal) REFERENCES Sucursal(Nombre) ON UPDATE CASCADE ON DELETE CASCADE;
 GO
 
 --Stored Procedure para obtener todos los administradores;
@@ -235,10 +242,108 @@ INSERT INTO Sucursal(Nombre,Distrito,Canton,Provincia,Fecha_Apertura,Capacidad_M
 END
 GO
 
+--Stored procedure para actualizar los datos de un gimnasio
+CREATE PROCEDURE updateGym
+@Currentname VARCHAR(20),
+@Nombre VARCHAR(20),
+@Distrito VARCHAR(25),
+@Canton VARCHAR(25),
+@Provincia VARCHAR(25),
+@Fecha_Apertura DATE,
+@Capacidad_Max INT,
+@Gerente VARCHAR(20)
+AS
+BEGIN
+
+UPDATE Sucursal SET Nombre=@Nombre,Distrito=@Distrito,Canton=@Canton,Provincia=@Provincia,Fecha_Apertura=@Fecha_Apertura,Capacidad_Max=@Capacidad_Max,Gerente=@Gerente WHERE Nombre=@Currentname
+
+END
+GO
+
+--Stored procedure para eliminar un gimnasio
+CREATE PROCEDURE deleteGym
+@Nombre VARCHAR(20)
+AS
+BEGIN
+
+DELETE FROM Sucursal WHERE Nombre=@Nombre
+
+END
+GO
+
 --Stored Procedure para obtener todos los gimnasios;
 CREATE PROCEDURE selectAllGyms
 AS
 SELECT * FROM Sucursal
+GO
+
+--Stored Procedure para obtener un gimnasio en particular
+CREATE PROCEDURE selectGym
+@Nombre VARCHAR(20)
+AS
+SELECT * FROM Sucursal WHERE Nombre=@Nombre
+GO
+
+--Stored procedure para poder activar el spa de una sucursal en particular
+CREATE PROCEDURE activateGymSpa
+@State BIT,
+@Nombre VARCHAR(20)
+AS
+UPDATE Sucursal SET Spa_Act=@State
+GO
+
+--Stored procedure para poder activar la tienda de una sucursal en particular
+CREATE PROCEDURE activateGymStore
+@State BIT,
+@Nombre VARCHAR(20)
+AS
+UPDATE Sucursal SET Tienda_Act=@State
+GO
+
+--Stored Procedure para añadir un numero de telefono a un gimnasio
+CREATE PROCEDURE addPhoneNumb
+@Nombre VARCHAR(20),
+@Telefono VARCHAR(20)
+AS
+BEGIN
+
+INSERT INTO Sucursal_Telefono(Sucursal,Telefono) VALUES(@Nombre,@Telefono)
+
+END
+GO
+
+--Stored Procedure para poder actualizar un numero de telefono de un gimnasio
+CREATE PROCEDURE updatePhoneNumb
+@CurrentNumb VARCHAR(20),
+@Nombre VARCHAR(20),
+@Telefono VARCHAR(20)
+AS
+BEGIN
+
+UPDATE Sucursal_Telefono SET Sucursal=@Nombre,Telefono=@Telefono WHERE Telefono=@CurrentNumb
+
+END
+GO
+--Stored Procedure para poder eliminar un numero de telefono de un gimnasio en particular
+CREATE PROCEDURE deletePhoneNumb
+@Telefono VARCHAR(20)
+AS
+BEGIN
+
+DELETE FROM Sucursal_Telefono WHERE Telefono=@Telefono
+
+END
+GO
+
+--Stored Procedure para obtener todoss los numeros de telefono de un gimnasio en particular
+CREATE PROCEDURE getAllPhoneNumbByGym
+@Nombre VARCHAR(20)
+AS
+BEGIN
+
+SELECT * FROM Sucursal_Telefono WHERE Sucursal=@Nombre
+
+END
 GO
 
 
