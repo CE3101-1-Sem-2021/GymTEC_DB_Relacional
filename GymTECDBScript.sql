@@ -176,6 +176,9 @@ ALTER TABLE Cliente_Clase ADD CONSTRAINT FKClase_ClientClase FOREIGN KEY (Id) RE
 ALTER TABLE Sucursal_Telefono ADD CONSTRAINT FKSucursal_Telefono FOREIGN KEY (Sucursal) REFERENCES Sucursal(Nombre) ON UPDATE CASCADE ON DELETE CASCADE;
 GO
 
+
+----------------------- GESTION DE ADMINISTRADORES---------------------------------
+
 --Stored Procedure para obtener todos los administradores;
 CREATE PROCEDURE selectAllAdmins
 AS
@@ -195,6 +198,20 @@ BEGIN
 INSERT INTO Administrador(Email,Nombre,Apellidos,Contraseña,Salt,Token) VALUES(@Email,@Nombre,@Apellidos,@Contraseña,@Salt,@Token)
 END
 GO
+
+--Stored procedure para obtener un administrador por su email
+CREATE PROCEDURE getAdminByMail
+@Email VARCHAR(50)
+AS
+BEGIN
+
+SELECT * FROM Administrador WHERE Email=@Email;
+
+END
+GO
+------------------------- FIN DE LA SECCION-----------------------------------------
+
+----------------------- GESTION DE EMPLEADOS----------------------------------------
 
 
 --Stored procedure para poder insertar un nuevo empleado
@@ -224,6 +241,112 @@ IF @Planilla IS NULL
 INSERT INTO Empleado(Cedula,Puesto,Planilla,Distrito,Canton,Provincia,Sucursal,Nombre,Apellidos,Salario,Email,Contraseña,Salt,Token) VALUES(@Cedula,@Puesto,@Planilla,@Distrito,@Canton,@Provincia,@Sucursal,@Nombre,@Apellidos,@Salario,@Email,@Contraseña,@Salt,@Token)
 END
 GO
+
+
+--Stored procedure para obtener un empleado por su cedula
+CREATE PROCEDURE getEmployeeById
+@Cedula VARCHAR(20)
+AS
+BEGIN
+
+SELECT * FROM Empleado WHERE Cedula=@Cedula;
+
+END
+GO
+
+--Stored procedure para obtener un empleado por su email
+CREATE PROCEDURE getEmployeeByMail
+@Email VARCHAR(50)
+AS
+BEGIN
+
+SELECT * FROM Empleado WHERE Email=@Email;
+
+END
+GO
+------------------------- FIN DE LA SECCION-----------------------------------------
+
+
+----------------------- GESTION DE MAQUINAS-----------------------------------------
+
+--Stored Procedure para poder agregar una maquina al sistema
+CREATE PROCEDURE insertMachine
+@Serial VARCHAR(50),
+@Tipo_Equipo VARCHAR(25),
+@Sucursal VARCHAR(20),
+@Marca VARCHAR(30),
+@Costo NUMERIC(7,2)
+AS
+BEGIN
+
+INSERT INTO Maquina(Serial,Tipo_Equipo,Sucursal,Marca,Costo) VALUES(@Serial,@Tipo_Equipo,@Sucursal,@Marca,@Costo)
+
+END
+GO
+
+--Stored Procedure para poder modificar la informacion de una maquina
+CREATE PROCEDURE updateMachine
+@CurrentSerial VARCHAR(50),
+@Serial VARCHAR(50),
+@Tipo_Equipo VARCHAR(25),
+@Sucursal VARCHAR(20),
+@Marca VARCHAR(30),
+@Costo NUMERIC(7,2)
+AS
+BEGIN
+
+UPDATE Maquina SET Serial=@Serial,Tipo_Equipo=@Tipo_Equipo,Sucursal=@Sucursal,Marca=@Marca,Costo=@Costo WHERE Serial=@CurrentSerial
+
+END
+GO
+
+--Stored Procedure para poder eliminar una maquina
+CREATE PROCEDURE deleteMachine
+@Serial VARCHAR(50)
+AS
+BEGIN
+
+DELETE FROM Maquina WHERE Serial=@Serial
+
+END
+GO
+
+--Stored Procedure para poder obtener todas las maquinas registradas en el sistema
+CREATE PROCEDURE getAllMachines
+AS
+BEGIN
+
+SELECT * FROM Maquina
+
+END
+GO
+
+--Stored Procedure para poder obtener todas las maquinas asociadas a un gimnasio en particular
+CREATE PROCEDURE getMachinesByGym
+@Sucursal VARCHAR(20)
+AS
+BEGIN
+
+SELECT * FROM Maquina WHERE Sucursal=@Sucursal
+
+END
+GO
+
+--Stored Procedure para obtener la informacion particular de una maquina
+CREATE PROCEDURE getMachine
+@Serial VARCHAR(50)
+AS
+BEGIN
+
+SELECT * FROM Maquina WHERE Serial=@Serial
+
+END
+GO
+
+------------------------- FIN DE LA SECCION-----------------------------------------
+
+----------------------- GESTION DE GIMNASIOS----------------------------------------
+
 
 --Stored procedure para poder insertar un nuevo gimnasio
 CREATE PROCEDURE insertGym
@@ -345,40 +468,72 @@ SELECT * FROM Sucursal_Telefono WHERE Sucursal=@Nombre
 
 END
 GO
+------------------------- FIN DE LA SECCION-----------------------------------------
 
+----------------------- GESTION DE TIPOS DE EQUIPO----------------------------------
 
---Stored procedure para obtener un empleado por su cedula
-CREATE PROCEDURE getEmployeeById
-@Cedula VARCHAR(20)
+--Stored Procedure para obtener todos  los tipos de maquinas
+CREATE PROCEDURE getAllMachineTypes
 AS
 BEGIN
 
-SELECT * FROM Empleado WHERE Cedula=@Cedula;
+SELECT * FROM Tipo_Equipo
 
 END
 GO
 
---Stored procedure para obtener un empleado por su email
-CREATE PROCEDURE getEmployeeByMail
-@Email VARCHAR(50)
+--Stored Procedure para obtener un tipo de maquina en particular
+CREATE PROCEDURE getMachineType
+@TypeName VARCHAR(25)
 AS
 BEGIN
 
-SELECT * FROM Empleado WHERE Email=@Email;
+SELECT * FROM Tipo_Equipo WHERE Nombre=@TypeName
 
 END
 GO
 
---Stored procedure para obtener un administrador por su email
-CREATE PROCEDURE getAdminByMail
-@Email VARCHAR(50)
+--Stored Procedure para crear un nuevo tipo de dispositivo
+CREATE PROCEDURE insertMachineType
+@Nombre VARCHAR(25),
+@Descripcion VARCHAR(200)
 AS
 BEGIN
 
-SELECT * FROM Administrador WHERE Email=@Email;
+INSERT INTO Tipo_Equipo(Nombre,Descripcion) VALUES(@Nombre,@Descripcion)
 
 END
 GO
+
+-- Stored Procedure para actualizar un tipo de maquina
+CREATE PROCEDURE updateMachineType
+@CurrentTypeName VARCHAR(25),
+@Nombre VARCHAR(25),
+@Descripcion VARCHAR(200)
+AS
+BEGIN
+
+UPDATE Tipo_Equipo SET Nombre=@Nombre,Descripcion=@Descripcion WHERE Nombre=@CurrentTypeName
+
+END
+GO
+
+--Stored Procedure para eliminar un tipo de dispositivo 
+CREATE PROCEDURE deleteMachineType
+@Nombre VARCHAR(25)
+AS
+BEGIN
+
+DELETE FROM Tipo_Equipo WHERE Nombre=@Nombre
+
+END
+GO
+
+------------------------- FIN DE LA SECCION-----------------------------------------
+
+
+----------------------- FUNCIONES MISCELANEAS---------------------------------------
+
 
 --Stored procedure para asignar un token a un empleado
 CREATE PROCEDURE assignTokenEmployee
@@ -399,3 +554,4 @@ BEGIN
 	UPDATE Administrador SET Token=@Token WHERE Id=@Id
 END
 GO
+------------------------- FIN DE LA SECCION-----------------------------------------
