@@ -1,4 +1,4 @@
---SELECT * FROM Administrador;
+
 --SELECT * FROM Puesto;
 --SELECT * FROM Planilla;
 --SELECT * FROM Tipo_Equipo;
@@ -8,7 +8,7 @@
 --SELECT * FROM Empleado;
 --SELECT * FROM Sucursal;
 
-
+DELETE FROM Empleado WHERE Cedula='117320554'
 
 
 
@@ -182,33 +182,9 @@ GO
 --Stored Procedure para obtener todos los administradores;
 CREATE PROCEDURE selectAllAdmins
 AS
-SELECT * FROM Administrador
+SELECT * FROM Empleado WHERE Puesto='Administrador'
 GO
 
---Stored procedure para poder insertar un nuevo administrador
-CREATE PROCEDURE insertAdmin
-@Email VARCHAR(50),
-@Nombre VARCHAR(20),
-@Apellidos VARCHAR(45),
-@Contraseña VARCHAR(50),
-@Salt VARCHAR(32),
-@Token VARCHAR(32)
-AS
-BEGIN
-INSERT INTO Administrador(Email,Nombre,Apellidos,Contraseña,Salt,Token) VALUES(@Email,@Nombre,@Apellidos,@Contraseña,@Salt,@Token)
-END
-GO
-
---Stored procedure para obtener un administrador por su email
-CREATE PROCEDURE getAdminByMail
-@Email VARCHAR(50)
-AS
-BEGIN
-
-SELECT * FROM Administrador WHERE Email=@Email;
-
-END
-GO
 ------------------------- FIN DE LA SECCION-----------------------------------------
 
 ----------------------- GESTION DE EMPLEADOS----------------------------------------
@@ -531,6 +507,188 @@ GO
 
 ------------------------- FIN DE LA SECCION-----------------------------------------
 
+----------------------- GESTION DE PUESTOS----------------------------------
+
+--Stored Procedure para obtener todos los puestos almacenados en la base de datos.
+CREATE PROCEDURE gettAllJobs
+AS
+BEGIN
+
+SELECT * FROM Puesto
+
+END
+GO
+
+--Stored Procedure para obetner un puesto en particular
+CREATE PROCEDURE getJob
+@Nombre VARCHAR(25)
+AS
+BEGIN
+
+SELECT * FROM Puesto WHERE Nombre=@Nombre
+
+END
+GO
+
+-- Stored Procedure para crear un nuevo puesto 
+CREATE PROCEDURE insertJob
+@Nombre VARCHAR(25),
+@Descripcion VARCHAR(200)
+AS
+BEGIN
+
+INSERT INTO Puesto(Nombre,Descripcion) VALUES(@Nombre,@Descripcion)
+
+END
+GO
+
+--Stored Procedure para actualizar un puesto dentro de la base de datos 
+CREATE PROCEDURE updateJob
+@CurrentName VARCHAR(25),
+@Nombre VARCHAR(25),
+@Descripcion VARCHAR(200)
+AS
+BEGIN
+
+UPDATE Puesto Set Nombre=@Nombre,Descripcion=@Descripcion WHERE Nombre=@CurrentName
+
+END
+GO
+
+--Stored Procedure para poder eliminar un puesto de la base de datos
+CREATE PROCEDURE deleteJob
+@Nombre VARCHAR(25)
+AS 
+BEGIN
+
+DELETE FROM Puesto WHERE Nombre=@Nombre
+
+END
+GO
+
+------------------------- FIN DE LA SECCION-----------------------------------------
+
+----------------------- GESTION DE PLANILLAS----------------------------------
+
+--Stored Procedure para poder obtener todos los tipos de planilla regitrados
+
+CREATE PROCEDURE getAllPayrolls
+AS
+BEGIN
+
+SELECT * FROM Planilla
+
+END
+GO
+
+--Stored Procedure para poder obtener una planilla en particular
+CREATE PROCEDURE getPayroll
+@Nombre VARCHAR(25)
+AS
+BEGIN
+
+SELECT * FROM Planilla WHERE Nombre=@Nombre
+
+END
+GO
+
+--Stored Procedure para insertar un nuevo tipo de planilla en la base de datos
+CREATE PROCEDURE insertPayRoll
+@Nombre VARCHAR(25),
+@Descripcion VARCHAR(200)
+AS
+BEGIN
+
+INSERT INTO Planilla(Nombre,Descripcion) VALUES(@Nombre,@Descripcion)
+
+END
+GO
+
+--Stored Procedure para modificar un tipo de planilla en la base de datos
+CREATE PROCEDURE updatePayRoll
+@CurrentName VARCHAR(25),
+@Nombre VARCHAR(25),
+@Descripcion VARCHAR(200)
+AS
+BEGIN
+
+UPDATE Planilla SET Nombre=@Nombre,Descripcion=@Descripcion WHERE Nombre=@CurrentName
+
+END
+GO
+
+--Stored Procedure para poder eliminar un tipo de planilla registrado
+CREATE PROCEDURE deletePayroll
+@Nombre VARCHAR(25)
+AS
+BEGIN
+
+DELETE FROM Planilla WHERE Nombre=@Nombre
+
+END
+GO
+
+------------------------- FIN DE LA SECCION-----------------------------------------
+
+----------------------- GESTION DE TRATAMIENTOS DE SPA----------------------------------
+
+--Stored Procedure para poder obtener todos los tratamientos de spa regitrados
+
+CREATE PROCEDURE getAllTreatments
+AS
+BEGIN
+
+SELECT * FROM Tratamiento_Spa
+
+END
+GO
+
+--Stored Procedure para poder obtener un tratamiento de spa en particular
+CREATE PROCEDURE getTreatment
+@Id INT
+AS
+BEGIN
+
+SELECT * FROM Tratamiento_Spa WHERE Id=@Id
+
+END
+GO
+
+--Stored Procedure para insertar un nuevo tratamiento de spa en la base de datos
+CREATE PROCEDURE insertTreatment
+@Nombre VARCHAR(25)
+AS
+BEGIN
+
+INSERT INTO Tratamiento_Spa(Nombre) VALUES(@Nombre)
+
+END
+GO
+
+--Stored Procedure para modificar un tratamiento de spa en la base de datos
+CREATE PROCEDURE updateTreatment
+@CurrentId INT,
+@Nombre VARCHAR(25)
+AS
+BEGIN
+
+UPDATE Tratamiento_Spa SET Nombre=@Nombre WHERE Id=@CurrentId
+
+END
+GO
+
+--Stored Procedure para poder eliminar un tratamiento de spa registrado
+CREATE PROCEDURE deleteTreatment
+@Id INT
+AS
+BEGIN
+
+DELETE FROM Tratamiento_Spa WHERE Id=@Id
+
+END
+GO
+
+------------------------- FIN DE LA SECCION-----------------------------------------
 
 ----------------------- FUNCIONES MISCELANEAS---------------------------------------
 
@@ -542,16 +700,6 @@ CREATE PROCEDURE assignTokenEmployee
 AS
 BEGIN
 	UPDATE Empleado SET Token=@Token WHERE Cedula=@Id
-END
-GO
-
---Stored procedure para asignar un token a un administrador
-CREATE PROCEDURE assignTokenAdmin
-@Token VARCHAR(32),
-@Id INT
-AS
-BEGIN
-	UPDATE Administrador SET Token=@Token WHERE Id=@Id
 END
 GO
 ------------------------- FIN DE LA SECCION-----------------------------------------
