@@ -7,21 +7,7 @@
 --SELECT * FROM Direccion;
 --SELECT * FROM Empleado;
 --SELECT * FROM Sucursal;
-
-DELETE FROM Empleado WHERE Cedula='117320554'
-
-
-
-CREATE TABLE Administrador
-(
-	Id INT IDENTITY(1,1) PRIMARY KEY,
-	Email VARCHAR(50) NOT NULL UNIQUE,
-	Nombre VARCHAR(20) NOT NULL,
-	Apellidos VARCHAR(45) NOT NULL,
-	Contraseña VARCHAR(50) NOT NULL,
-	Salt VARCHAR(32) NOT NULL,
-	Token VARCHAR(32) NOT NULL UNIQUE
-);
+--SELECT * FROM Producto_Sucursal
 
 CREATE TABLE Empleado
 (
@@ -189,6 +175,33 @@ GO
 
 ----------------------- GESTION DE EMPLEADOS----------------------------------------
 
+--Stored Procedure  para obtener todos los empleados registrados en la base de datos
+CREATE PROCEDURE selectAllEmployees
+AS
+SELECT * FROM Empleado
+GO
+
+--Stored procedure para obtener un empleado por su cedula
+CREATE PROCEDURE getEmployeeById
+@Cedula VARCHAR(20)
+AS
+BEGIN
+
+SELECT * FROM Empleado WHERE Cedula=@Cedula;
+
+END
+GO
+
+--Stored procedure para obtener un empleado por su email
+CREATE PROCEDURE getEmployeeByMail
+@Email VARCHAR(50)
+AS
+BEGIN
+
+SELECT * FROM Empleado WHERE Email=@Email;
+
+END
+GO
 
 --Stored procedure para poder insertar un nuevo empleado
 CREATE PROCEDURE insertEmployee
@@ -218,28 +231,42 @@ INSERT INTO Empleado(Cedula,Puesto,Planilla,Distrito,Canton,Provincia,Sucursal,N
 END
 GO
 
+--Stored Procedure para poder actualizar la informacion de un empleado en la base de datos
+CREATE PROCEDURE updateEmployee
+@CurrentId VARCHAR(20),
+@Cedula VARCHAR(20),
+@Puesto VARCHAR(25),
+@Planilla VARCHAR(25),
+@Distrito VARCHAR(25),
+@Canton VARCHAR(25),
+@Provincia VARCHAR(25),
+@Sucursal VARCHAR(20),
+@Nombre VARCHAR(20),
+@Apellidos VARCHAR(45),
+@Salario NUMERIC(7,2),
+@Email VARCHAR(50)
+AS
+BEGIN
+IF @Puesto IS NULL
+	SET @Puesto='Sin Asignar'
+IF @Planilla IS NULL
+	SET @Planilla='Sin Asignar'
 
---Stored procedure para obtener un empleado por su cedula
-CREATE PROCEDURE getEmployeeById
+UPDATE Empleado SET Cedula=@Cedula,Puesto=@Puesto,Planilla=@Planilla,Distrito=@Distrito,Canton=@Canton,Provincia=@Provincia,Sucursal=@Sucursal,Nombre=@Nombre,Apellidos=@Apellidos,Salario=@Salario,Email=@Email WHERE Cedula=@CurrentId
+
+END
+GO
+
+--Stored Procedure para poder eliminar un empleado de la base de datos.
+CREATE PROCEDURE deleteEmployee
 @Cedula VARCHAR(20)
 AS
 BEGIN
 
-SELECT * FROM Empleado WHERE Cedula=@Cedula;
+DELETE FROM Empleado WHERE Cedula=@Cedula
 
 END
-GO
 
---Stored procedure para obtener un empleado por su email
-CREATE PROCEDURE getEmployeeByMail
-@Email VARCHAR(50)
-AS
-BEGIN
-
-SELECT * FROM Empleado WHERE Email=@Email;
-
-END
-GO
 ------------------------- FIN DE LA SECCION-----------------------------------------
 
 
@@ -688,6 +715,181 @@ DELETE FROM Tratamiento_Spa WHERE Id=@Id
 END
 GO
 
+--Stored Procedure para asignar un tratamiento de spa a una sede en especifico
+CREATE PROCEDURE assignTreatment
+@treatmentId INT,
+@gymName VARCHAR(20)
+AS
+BEGIN
+
+INSERT INTO Tratamiento_Sucursal(Id_Tratamiento,Sucursal) VALUES(@treatmentId,@gymName)
+
+END
+GO
+
+--Stored Procedure para desasignar un tratamiento a una sucursal
+CREATE PROCEDURE unsignTreatment
+@treatmentId INT,
+@gymName VARCHAR(20)
+AS
+BEGIN
+
+DELETE FROM Tratamiento_Sucursal WHERE Id_Tratamiento=@treatmentId AND Sucursal=@gymName
+
+END
+GO
+
+------------------------- FIN DE LA SECCION-----------------------------------------
+
+----------------------- GESTION DE PRODUCTOS----------------------------------
+
+--Stored Procedure para obtener todos los productos registrados en la base de datos
+CREATE PROCEDURE getAllProducts
+AS
+BEGIN
+
+SELECT * FROM Producto
+
+END
+GO
+
+--Stored Procedure para obtener un producto en particular
+CREATE PROCEDURE getProduct
+@CodigoBarras VARCHAR(50)
+AS
+BEGIN
+
+SELECT * FROM Producto WHERE Codigo_Barras=@CodigoBarras
+
+END
+GO
+
+--Stored Procedure para registrar un nuevo porducto en la base de datos
+CREATE PROCEDURE createProduct
+@Codigo_Barras VARCHAR(50),
+@Nombre VARCHAR(25),
+@Descripcion VARCHAR(300),
+@Costo NUMERIC(7,2)
+AS
+BEGIN
+
+INSERT INTO Producto(Codigo_Barras,Nombre,Descripcion,Costo) VALUES (@Codigo_Barras,@Nombre,@Descripcion,@Costo)
+
+END
+GO
+
+--Stored Procedure para actualizar un porducto en la base de datos
+CREATE PROCEDURE updateProduct
+@CurrentBarCode VARCHAR(50),
+@Codigo_Barras VARCHAR(50),
+@Nombre VARCHAR(25),
+@Descripcion VARCHAR(300),
+@Costo NUMERIC(7,2)
+AS
+BEGIN
+
+UPDATE Producto SET Codigo_Barras=@Codigo_Barras,Nombre=@Nombre,Descripcion=@Descripcion,Costo=@Costo WHERE Codigo_Barras=@CurrentBarCode
+
+END
+GO
+
+--Stored Procedure para eliminar un producto de la base de datos
+CREATE PROCEDURE deleteProduct
+@BarCode VARCHAR(50)
+AS
+BEGIN
+
+DELETE FROM Producto WHERE Codigo_Barras=@BarCode
+
+END
+GO
+
+--Stored Procedure para poder asignar un producto a una sucursal
+CREATE PROCEDURE assignProduct
+@BarCode VARCHAR(50),
+@GymName VARCHAR(20)
+AS
+BEGIN
+
+INSERT INTO Producto_Sucursal(Codigo_Barras_Prod,Sucursal) VALUES(@BarCode,@GymName)
+
+END
+GO
+
+--Stored Procedure para poder desasignar un producto de una sucursal
+CREATE PROCEDURE unsignProduct
+@BarCode VARCHAR(50),
+@GymName VARCHAR(20)
+AS
+BEGIN
+
+DELETE FROM Producto_Sucursal WHERE Codigo_Barras_Prod=@BarCode AND Sucursal=@GymName
+
+END
+GO
+
+------------------------- FIN DE LA SECCION-----------------------------------------
+
+----------------------- GESTION DE SERVICIOS----------------------------------
+
+--Stored Procedure para obtener todos los servicios registrados
+CREATE PROCEDURE getAllServices
+AS
+BEGIN
+
+SELECT * FROM Tipo_Servicio
+
+END
+GO
+
+--Stored Procedure  para obtener un servicio en particular
+CREATE PROCEDURE getService
+@Nombre VARCHAR(25)
+AS 
+BEGIN
+
+SELECT * FROM Tipo_Servicio WHERE Nombre=@Nombre
+
+END
+GO
+
+--Stored Procedure para crear un nuevo tipo de servicio
+CREATE PROCEDURE createService
+@Nombre VARCHAR(25),
+@Descripcion VARCHAR(200)
+AS
+BEGIN
+
+INSERT INTO Tipo_Servicio(Nombre,Descripcion) VALUES (@Nombre,@Descripcion)
+
+END
+GO
+
+--Stored Procedure para actualizar un servicio
+CREATE PROCEDURE updateService
+@CurrentName VARCHAR(25),
+@Nombre VARCHAR(25),
+@Descripcion VARCHAR(200)
+AS
+BEGIN
+
+UPDATE Tipo_Servicio SET Nombre=@Nombre,Descripcion=@Descripcion WHERE Nombre= @CurrentName
+
+END
+GO
+
+--Stored Procedure para eliminar un servicio de la base de datos
+CREATE PROCEDURE deleteService
+@Nombre VARCHAR(25)
+AS
+BEGIN
+
+DELETE FROM Tipo_Servicio WHERE Nombre=@Nombre
+
+END
+GO
+
+
 ------------------------- FIN DE LA SECCION-----------------------------------------
 
 ----------------------- FUNCIONES MISCELANEAS---------------------------------------
@@ -702,4 +904,34 @@ BEGIN
 	UPDATE Empleado SET Token=@Token WHERE Cedula=@Id
 END
 GO
+------------------------- FIN DE LA SECCION-----------------------------------------
+
+
+------------------------- TRIGGERS -------------------------------------------------
+
+--Trigger para evitar que se eliminen/actualicen los tratamientos por default
+CREATE TRIGGER modifyDeleteTreatment
+ON Tratamiento_Spa
+AFTER UPDATE,DELETE
+AS
+BEGIN
+	DECLARE @treatmentName VARCHAR(25)
+	DECLARE @treatmentId INT
+	SELECT @treatmentName=deleted.Nombre FROM deleted
+	SELECT @treatmentId=deleted.Id FROM deleted
+	IF @treatmentName IN ('Masaje Relajante','Masaje Descarga Muscular','Sauna','Baños a Vapor')
+	BEGIN
+		RAISERROR('defaultTreatmentModification',16,1)
+		ROLLBACK TRANSACTION
+	END
+	ELSE
+	BEGIN
+		IF EXISTS(SELECT * FROM Tratamiento_Sucursal WHERE Id_Tratamiento=@treatmentId)
+		BEGIN
+			RAISERROR('assignedTreatment',16,1)
+			ROLLBACK TRANSACTION
+		END
+	END
+END
+
 ------------------------- FIN DE LA SECCION-----------------------------------------
