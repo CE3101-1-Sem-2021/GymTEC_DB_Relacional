@@ -8,6 +8,8 @@
 --SELECT * FROM Empleado;
 --SELECT * FROM Sucursal;
 --SELECT * FROM Producto_Sucursal
+--SELECT * FROM Clase
+--SELECT * FROM Tratamiento_Sucursal
 
 CREATE TABLE Empleado
 (
@@ -107,14 +109,20 @@ CREATE TABLE Sucursal_Telefono
 	Telefono VARCHAR(20) PRIMARY KEY,
 	Sucursal VARCHAR(20) NOT NULL
 );
+CREATE TABLE Sucursal_Horario
+(
+	Dia VARCHAR(15),
+	Sucursal VARCHAR(20),
+	Hora_Apertura TIME(0),
+	Hora_Cierre TIME(0),
+	PRIMARY KEY(Dia,Sucursal)
+);
 
 CREATE TABLE Cliente_Clase
 (
-	Id INT PRIMARY KEY,
-	Hora_Inicio_Clase TIME,
-	Fecha_Clase DATE,
-	Tipo_Clase VARCHAR(25),
+	Id INT,
 	Cliente VARCHAR(20),
+	PRIMARY KEY(Id,Cliente)
 );
 
 CREATE TABLE Tratamiento_Sucursal
@@ -160,6 +168,8 @@ ALTER TABLE Tratamiento_Sucursal ADD CONSTRAINT FKSucursal_TratSuc FOREIGN KEY(S
 ALTER TABLE Cliente_Clase ADD CONSTRAINT FKClase_ClientClase FOREIGN KEY (Id) REFERENCES Clase(Id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 ALTER TABLE Sucursal_Telefono ADD CONSTRAINT FKSucursal_Telefono FOREIGN KEY (Sucursal) REFERENCES Sucursal(Nombre) ON UPDATE CASCADE ON DELETE CASCADE;
+
+ALTER TABLE Sucursal_Horario ADD CONSTRAINT FKSucursal_Horario FOREIGN KEY(Sucursal) REFERENCES Sucursal(Nombre) ON UPDATE CASCADE ON DELETE CASCADE;
 GO
 
 
@@ -471,7 +481,166 @@ SELECT * FROM Sucursal_Telefono WHERE Sucursal=@Nombre
 
 END
 GO
+
+--Stored Procedure para añadir un horario a un gimnasio
+CREATE PROCEDURE addSchedule
+@Dia VARCHAR(15),
+@Sucursal VARCHAR(20),
+@Hora_Apertura TIME(0),
+@Hora_Cierre TIME(0)
+AS
+BEGIN
+
+INSERT INTO Sucursal_Horario(Dia,Sucursal,Hora_Apertura,Hora_Cierre) VALUES(@Dia,@Sucursal,@Hora_Apertura,@Hora_Cierre)
+
+END
+GO
+
+--Stored Procedure para poder actualizar un horario de un gimnasio
+CREATE PROCEDURE updateSchedule
+@CurrentDay VARCHAR(15),
+@Dia VARCHAR(15),
+@Sucursal VARCHAR(20),
+@Hora_Apertura TIME(0),
+@Hora_Cierre TIME(0)
+AS
+BEGIN
+
+UPDATE Sucursal_Horario SET Dia=@Dia,Sucursal=@Sucursal,Hora_Apertura=@Hora_Apertura,Hora_Cierre=@Hora_Cierre WHERE Dia=@CurrentDay
+
+END
+GO
+
+--Stored Procedure para poder eliminar un horario de un gimnasio en particular
+CREATE PROCEDURE deleteSchedule
+@Dia VARCHAR(15),
+@Sucursal VARCHAR(20)
+AS
+BEGIN
+
+DELETE FROM Sucursal_Horario WHERE Dia=@Dia AND Sucursal=@Sucursal
+
+END
+GO
+
+--Stored Procedure para obtener todos los horarios de un gimnasio en particular
+CREATE PROCEDURE getAllSchedulesByGym
+@Nombre VARCHAR(20)
+AS
+BEGIN
+
+SELECT * FROM Sucursal_Horario WHERE Sucursal=@Nombre
+
+END
+GO
 ------------------------- FIN DE LA SECCION-----------------------------------------
+
+
+----------------------- GESTION DE CLASES----------------------------------
+
+--Stored Procedure para poder obtener todas las clases registradas en el sistema
+CREATE PROCEDURE getAllClasses
+AS
+BEGIN
+
+SELECT * FROM Clase
+
+END
+GO
+
+--Stored Procedure para poder obtener una clase en particular
+CREATE PROCEDURE getClass
+@Id INT
+AS
+BEGIN
+
+SELECT * FROM Clase WHERE Id=@Id
+
+END
+GO
+
+--Stored Procedure para poder obtener todas las clases asociadas a un gimnasio en particular
+CREATE PROCEDURE getClassesByGym
+@Sucursal VARCHAR(20)
+AS
+BEGIN
+
+SELECT * FROM Clase WHERE Sucursal=@Sucursal
+
+END
+GO
+
+--Stored Procedure para poder crear una nueva clase 
+CREATE PROCEDURE insertClass
+@Hora_Inicio TIME(0),
+@Fecha DATE,
+@Tipo_Servicio VARCHAR(25),
+@Hora_Final TIME(0),
+@Sucursal VARCHAR(20),
+@Instructor VARCHAR(20),
+@Modalidad VARCHAR(10),
+@Capacidad INT
+AS
+BEGIN
+
+INSERT INTO Clase(Hora_Inicio,Fecha,Tipo_Servicio,Hora_Final,Sucursal,Instructor,Modalidad,Capacidad) VALUES(@Hora_Inicio,@Fecha,@Tipo_Servicio,@Hora_Final,@Sucursal,@Instructor,@Modalidad,@Capacidad)
+
+END
+GO
+
+--Stored Procedure para poder actualizar la informacion de una clase ya registrada
+CREATE PROCEDURE updateClass
+@Id INT, 
+@Hora_Inicio TIME(0),
+@Fecha DATE,
+@Tipo_Servicio VARCHAR(25),
+@Hora_Final TIME(0),
+@Sucursal VARCHAR(20),
+@Instructor VARCHAR(20),
+@Modalidad VARCHAR(10),
+@Capacidad INT
+AS
+BEGIN
+
+UPDATE Clase SET Hora_Inicio=@Hora_Inicio,Fecha=@Fecha,Tipo_Servicio=@Tipo_Servicio,Hora_Final=@Hora_Final,Sucursal=@Sucursal,Instructor=@Instructor,Modalidad=@Modalidad,Capacidad=@Capacidad WHERE Id=@Id
+
+END
+GO
+
+--Stored Procedure para poder eliminar una clase ya registrada
+CREATE PROCEDURE deleteClass
+@Id INT
+AS
+BEGIN
+
+DELETE FROM Clase WHERE Id=@Id
+
+END
+GO
+
+--Stored Procedure para poder buscar clases para ciertos parametros
+
+CREATE PROCEDURE searchClasses
+@Hora_Inicio TIME(0),
+@Fecha DATE,
+@Tipo_Servicio VARCHAR(25),
+@Hora_Final TIME(0),
+@Sucursal VARCHAR(20)
+AS
+BEGIN
+
+SELECT * FROM Clase WHERE (
+(@Sucursal IS NULL OR Sucursal=@Sucursal) AND 
+(@Fecha IS NULL OR Fecha=@Fecha) AND 
+(@Tipo_Servicio IS NULL OR Tipo_Servicio=@Tipo_Servicio) AND 
+(@Hora_Inicio IS NULL OR Hora_Inicio=@Hora_Inicio) AND 
+(@Hora_Final IS Null OR Hora_Final=@Hora_Final)) 
+
+END
+GO
+
+------------------------- FIN DE LA SECCION-----------------------------------------
+
 
 ----------------------- GESTION DE TIPOS DE EQUIPO----------------------------------
 
@@ -681,6 +850,20 @@ SELECT * FROM Tratamiento_Spa WHERE Id=@Id
 END
 GO
 
+--Stored Procedure para obtener todos los tratamientos asociados a una sucursal en particular
+CREATE PROCEDURE getTreatmentsByGym
+@Sucursal VARCHAR(20)
+AS
+BEGIN
+
+SELECT Tratamiento_Spa.Id,Tratamiento_Spa.Nombre FROM 
+(Sucursal JOIN (Tratamiento_Spa JOIN Tratamiento_Sucursal ON Tratamiento_Spa.Id=Tratamiento_Sucursal.Id_Tratamiento) ON Tratamiento_Sucursal.Sucursal=Sucursal.Nombre) 
+WHERE Sucursal.Nombre=@Sucursal
+
+END
+GO
+
+
 --Stored Procedure para insertar un nuevo tratamiento de spa en la base de datos
 CREATE PROCEDURE insertTreatment
 @Nombre VARCHAR(25)
@@ -760,6 +943,19 @@ AS
 BEGIN
 
 SELECT * FROM Producto WHERE Codigo_Barras=@CodigoBarras
+
+END
+GO
+
+--Stored Procedure para obtener los productos asociados a una sucursal en particular
+CREATE PROCEDURE getProductsByGym
+@Sucursal VARCHAR(20)
+AS
+BEGIN
+
+SELECT * FROM 
+(Sucursal JOIN (Producto_Sucursal JOIN Producto ON Producto_Sucursal.Codigo_Barras_Prod=Producto.Codigo_Barras) ON Sucursal.Nombre=Producto_Sucursal.Sucursal)
+WHERE Sucursal.Nombre=@Sucursal
 
 END
 GO
@@ -933,5 +1129,28 @@ BEGIN
 		END
 	END
 END
+GO
+--Trigger par determinar si el horario de una clase es correcto
+CREATE TRIGGER verifySchedule
+ON Clase
+AFTER INSERT,UPDATE
+AS
+BEGIN
+	DECLARE @horaInicio TIME(0)
+	DECLARE @horaFinal TIME(0)
+	SELECT @horaInicio=inserted.Hora_Inicio FROM inserted
+	SELECT @horaFinal=inserted.Hora_Final FROM inserted
+	
+	IF @horaInicio>@horaFinal
+	BEGIN
+
+		RAISERROR('wrongSchedule',16,1)
+		ROLLBACK TRANSACTION
+		
+	END
+
+END
+GO
+
 
 ------------------------- FIN DE LA SECCION-----------------------------------------
