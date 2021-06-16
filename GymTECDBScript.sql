@@ -11,6 +11,7 @@
 --SELECT * FROM Clase
 --SELECT * FROM Tratamiento_Sucursal
 
+
 CREATE TABLE Empleado
 (
 	Cedula VARCHAR(20) PRIMARY KEY,
@@ -23,10 +24,12 @@ CREATE TABLE Empleado
 	Nombre VARCHAR(20) NOT NULL,
 	Apellidos VARCHAR(45) NOT NULL,
 	Salario NUMERIC(7,2) NOT NULL,
+	Horas_Trabajadas NUMERIC(5,2) DEFAULT 0,
 	Email VARCHAR(50) NOT NULL UNIQUE,
 	Contraseña VARCHAR(50) NOT NULL,
 	Salt VARCHAR(32) NOT NULL,
-	Token VARCHAR(32) NOT NULL UNIQUE
+	Token VARCHAR(32) NOT NULL UNIQUE,
+	imageURL VARCHAR(500) DEFAULT 'https://cdn1.iconfinder.com/data/icons/technology-devices-2/100/Profile-512.png'
 );
 
 CREATE TABLE Sucursal
@@ -39,14 +42,15 @@ CREATE TABLE Sucursal
 	Capacidad_Max INT NOT NULL,
 	Gerente VARCHAR(20),
 	Tienda_Act BIT DEFAULT 0,
-	Spa_Act BIT DEFAULT 0
+	Spa_Act BIT DEFAULT 0,
+	imageURL VARCHAR(500) DEFAULT 'https://image.freepik.com/free-vector/city-buildings-seamless-pattern_1284-19354.jpg'
 );
 
 CREATE TABLE Clase
 (
 	Id INT IDENTITY(1,1) PRIMARY KEY, 
-	Hora_Inicio TIME(0),
-	Fecha DATE,
+	Hora_Inicio TIME(0) NOT NULL,
+	Fecha DATE NOT NULL,
 	Tipo_Servicio VARCHAR(25) NOT NULL,
 	Hora_Final TIME(0) NOT NULL,
 	Sucursal VARCHAR(20) NOT NULL,
@@ -61,7 +65,8 @@ CREATE TABLE Maquina
 	Tipo_Equipo VARCHAR(25) NOT NULL,
 	Sucursal VARCHAR(20),
 	Marca VARCHAR(30) NOT NULL,
-	Costo NUMERIC(7,2) NOT NULL
+	Costo NUMERIC(7,2) NOT NULL,
+	imageURL VARCHAR(500) DEFAULT 'https://image.freepik.com/vector-gratis/patron-isometrico-gimnasio_80590-3889.jpg'
 );
 
 CREATE TABLE Producto
@@ -69,13 +74,16 @@ CREATE TABLE Producto
 	Codigo_Barras VARCHAR(50) PRIMARY KEY,
 	Nombre VARCHAR(25) NOT NULL,
 	Descripcion VARCHAR(300) NOT NULL,
-	Costo NUMERIC(7,2)
+	Costo NUMERIC(7,2),
+	imageURL VARCHAR(500) DEFAULT 'https://images.vectorhq.com/images/istock/previews/9990/99906625-sport-gym-flat-illustration-pattern-design.jpg'
+
 );
 
 CREATE TABLE Tratamiento_Spa
 (
 	Id INT IDENTITY(1,1) PRIMARY KEY,
-	Nombre VARCHAR(25) NOT NULL
+	Nombre VARCHAR(25) NOT NULL,
+	imageURL VARCHAR(500) DEFAULT 'https://st2.depositphotos.com/1980975/11390/v/950/depositphotos_113904468-stock-illustration-spa-background-pattern-vector.jpg'
 );
 
 CREATE TABLE Direccion
@@ -89,13 +97,15 @@ CREATE TABLE Direccion
 CREATE TABLE Puesto
 (
 	Nombre VARCHAR(25) PRIMARY KEY,
-	Descripcion VARCHAR(200) NOT NULL
+	Descripcion VARCHAR(200) NOT NULL,
+	imageURL VARCHAR(500) DEFAULT 'https://d2gg9evh47fn9z.cloudfront.net/800px_COLOURBOX18349262.jpg'
 );
 
 CREATE TABLE Planilla
 (
 	Nombre VARCHAR(25) PRIMARY KEY,
-	Descripcion VARCHAR(200) NOT NULL
+	Descripcion VARCHAR(200) NOT NULL,
+	imageURL VARCHAR(500) DEFAULT 'https://st6.cannypic.com/thumbs/38/380155_632_canny_pic.jpg'
 );
 
 CREATE TABLE Producto_Sucursal
@@ -135,14 +145,17 @@ CREATE TABLE Tratamiento_Sucursal
 CREATE TABLE Tipo_Equipo
 (
 	Nombre VARCHAR(25) PRIMARY KEY,
-	Descripcion VARCHAR(200) NOT NULL
+	Descripcion VARCHAR(200) NOT NULL,
+	imageURL VARCHAR(500) DEFAULT 'https://image.freepik.com/free-vector/seamless-pattern-with-fitness-icons-dumbbells-kettlebell-green-icons-white_1416-673.jpg'
 );
 
 CREATE TABLE Tipo_Servicio
 (
 	Nombre VARCHAR(25) PRIMARY KEY,
-	Descripcion VARCHAR(200) NOT NULL
+	Descripcion VARCHAR(200) NOT NULL,
+	imageURL VARCHAR(500) DEFAULT 'https://i.pinimg.com/474x/3d/11/b6/3d11b6a3e563a17a1924ab18e17b0542.jpg'
 );
+
 
 ALTER TABLE Empleado ADD CONSTRAINT FKPuesto_Empleado FOREIGN KEY(Puesto) REFERENCES Puesto(Nombre) ON UPDATE CASCADE ON DELETE SET DEFAULT;
 ALTER TABLE Empleado ADD CONSTRAINT FKPlanilla_Empleado FOREIGN KEY(Planilla) REFERENCES Planilla(Nombre) ON UPDATE CASCADE ON DELETE SET DEFAULT;
@@ -180,7 +193,14 @@ CREATE PROCEDURE selectAllAdmins
 AS
 SELECT * FROM Empleado WHERE Puesto='Administrador'
 GO
-
+--Stored Procedure para obtener un adminsitrador por su cedula 
+CREATE PROCEDURE getAdminById
+@Id VARCHAR(20)
+AS
+BEGIN
+SELECT * FROM Empleado WHERE Cedula=@Id AND Puesto='Administrador'
+END
+GO
 ------------------------- FIN DE LA SECCION-----------------------------------------
 
 ----------------------- GESTION DE EMPLEADOS----------------------------------------
@@ -607,6 +627,34 @@ UPDATE Clase SET Hora_Inicio=@Hora_Inicio,Fecha=@Fecha,Tipo_Servicio=@Tipo_Servi
 END
 GO
 
+--Stored Procedure para inscribirse en una clase
+CREATE PROCEDURE registerClass
+@clientId VARCHAR(20),
+@classId INT
+AS
+BEGIN
+
+INSERT INTO Cliente_Clase(Id,Cliente) VALUES(@classId,@clientId)
+UPDATE Clase SET Capacidad=Capacidad-1 WHERE Id=@classId
+
+END
+GO
+
+--Stored Procedure para desincribirse en una clase
+CREATE PROCEDURE unregisterClass
+@clientId VARCHAR(20),
+@classId INT
+AS
+BEGIN
+
+DELETE FROM Cliente_Clase WHERE Id=@classId AND Cliente=@clientId
+UPDATE Clase SET Capacidad=Capacidad+1 WHERE Id=@classId
+
+END
+GO
+
+
+
 --Stored Procedure para poder eliminar una clase ya registrada
 CREATE PROCEDURE deleteClass
 @Id INT
@@ -628,16 +676,35 @@ CREATE PROCEDURE searchClasses
 @Sucursal VARCHAR(20)
 AS
 BEGIN
+DECLARE @currentDate DATE
+SET @currentDate=CAST( GETDATE() AS Date )
+IF @Fecha IS NULL AND @Hora_Inicio IS NULL AND @Tipo_Servicio IS NULL AND @Hora_Final IS NULL AND @Sucursal IS NULL
+BEGIN
+	SELECT * FROM Clase WHERE Fecha>=@currentDate
+	RETURN
+END
+IF @Fecha IS NULL OR @Fecha<@currentDate
+BEGIN
+	SELECT * FROM Clase WHERE (
+	(@Sucursal IS NULL OR Sucursal=@Sucursal) AND 
+	(Fecha>=@currentDate) AND 
+	(@Tipo_Servicio IS NULL OR Tipo_Servicio=@Tipo_Servicio) AND 
+	(@Hora_Inicio IS NULL OR Hora_Inicio=@Hora_Inicio) AND 
+	(@Hora_Final IS Null OR Hora_Final=@Hora_Final))
+	RETURN
 
+END
 SELECT * FROM Clase WHERE (
 (@Sucursal IS NULL OR Sucursal=@Sucursal) AND 
-(@Fecha IS NULL OR Fecha=@Fecha) AND 
+(Fecha=@Fecha) AND 
 (@Tipo_Servicio IS NULL OR Tipo_Servicio=@Tipo_Servicio) AND 
 (@Hora_Inicio IS NULL OR Hora_Inicio=@Hora_Inicio) AND 
 (@Hora_Final IS Null OR Hora_Final=@Hora_Final)) 
 
 END
 GO
+
+EXEC searchClasses @Hora_Inicio=NULL,@Fecha=NULL,@Hora_Final=NULL,@Tipo_Servicio=NULL,@Sucursal='El Potro'
 
 ------------------------- FIN DE LA SECCION-----------------------------------------
 
@@ -706,11 +773,11 @@ GO
 ----------------------- GESTION DE PUESTOS----------------------------------
 
 --Stored Procedure para obtener todos los puestos almacenados en la base de datos.
-CREATE PROCEDURE gettAllJobs
+CREATE PROCEDURE getAllJobs
 AS
 BEGIN
 
-SELECT * FROM Puesto
+SELECT * FROM Puesto WHERE NOT Nombre='Sin Asignar'
 
 END
 GO
@@ -1091,6 +1158,18 @@ GO
 ----------------------- FUNCIONES MISCELANEAS---------------------------------------
 
 
+--Stored Procedures para eliminar las clases que ya fueron pagadas a un empleado
+CREATE PROCEDURE deletePaidClasses
+@employee VARCHAR(20)
+AS
+BEGIN
+DECLARE @CurrentDate DATE
+SET @CurrentDate=CAST( GETDATE() AS Date )
+DELETE FROM Clase WHERE Instructor=@employee AND @CurrentDate>Fecha
+
+END
+GO
+
 --Stored procedure para asignar un token a un empleado
 CREATE PROCEDURE assignTokenEmployee
 @Token VARCHAR(32),
@@ -1100,8 +1179,86 @@ BEGIN
 	UPDATE Empleado SET Token=@Token WHERE Cedula=@Id
 END
 GO
-------------------------- FIN DE LA SECCION-----------------------------------------
 
+--Stored Procedure para calcular el pago a cada uno de los empleados 
+CREATE PROCEDURE calculatePayment
+@Sucursal VARCHAR(20)
+AS
+BEGIN
+DECLARE @temp TABLE
+(
+	Cedula VARCHAR(20),
+	Nombre VARCHAR(66),
+	Planilla VARCHAR(25),
+	Unidades NUMERIC(7,2),
+	Monto NUMERIC(7,2)
+)
+DECLARE @Cedula VARCHAR(20)
+DECLARE @Planilla VARCHAR(25)
+DECLARE @Nombre VARCHAR(20)
+DECLARE @Apellidos VARCHAR(45)
+DECLARE @Salario NUMERIC(7,2)
+DECLARE @Horas_Trabajadas NUMERIC(5,2)
+DECLARE employeeCursor CURSOR FOR SELECT Cedula,Planilla,Nombre,Apellidos,Salario,Horas_Trabajadas FROM Empleado WHERE Sucursal=@Sucursal
+OPEN employeeCursor
+FETCH NEXT FROM employeeCursor INTO
+	@Cedula,
+	@Planilla,
+	@Nombre,
+	@Apellidos,
+	@Salario,
+	@Horas_Trabajadas
+
+WHILE @@FETCH_STATUS=0
+BEGIN
+	IF @Planilla='Sin Asignar'
+	BEGIN
+		INSERT INTO @temp(Nombre,Cedula,Planilla,Unidades,Monto) VALUES(@Nombre+' '+@Apellidos,@Cedula,@Planilla,-1,-1)
+	END
+	ELSE
+	BEGIN
+		IF @Planilla='Pago Mensual'
+		BEGIN
+			INSERT INTO @temp(Nombre,Planilla,Cedula,Unidades,Monto) VALUES(@Nombre+' '+@Apellidos,@Cedula,@Planilla,-1,@Salario)
+		END
+		ELSE
+		BEGIN
+			IF @Planilla='Pago por Horas'
+			BEGIN
+				INSERT INTO @temp(Nombre,Cedula,Planilla,Unidades,Monto) VALUES(@Nombre+' '+@Apellidos,@Cedula,@Planilla,@Horas_Trabajadas,@Horas_Trabajadas*@Salario)
+			END
+			ELSE
+			BEGIN
+				IF @Planilla='Pago por Clase'
+				BEGIN
+					DECLARE @Clases INT
+					DECLARE @CurrentDate DATE
+					SET @CurrentDate=CAST( GETDATE() AS Date )
+					SELECT @Clases=COUNT(*) FROM Clase WHERE Instructor=@Cedula AND @CurrentDate>Fecha
+					INSERT INTO @temp(Cedula,Planilla,Nombre,Unidades,Monto) VALUES(@Cedula,@Planilla,@Nombre+' '+@Apellidos,@Clases,@Salario*@Clases)
+					IF @Clases>0
+					BEGIN
+						EXEC deletePaidClasses @employee=@Cedula
+					END
+				END
+			END
+		END
+	END
+	
+	FETCH NEXT FROM employeeCursor INTO
+	@Cedula,
+	@Planilla,
+	@Nombre,
+	@Apellidos,
+	@Salario,
+	@Horas_Trabajadas
+END
+CLOSE employeeCursor
+DEALLOCATE employeeCursor
+SELECT * FROM @Temp
+END
+GO
+------------------------- FIN DE LA SECCION-----------------------------------------
 
 ------------------------- TRIGGERS -------------------------------------------------
 
@@ -1130,8 +1287,26 @@ BEGIN
 	END
 END
 GO
+
+--Trigger para evitar que se eliminen/actualicen los puestos por default
+CREATE TRIGGER modifyDeleteJob
+ON Puesto
+AFTER UPDATE,DELETE
+AS
+BEGIN
+	DECLARE @JobName VARCHAR(25)
+	SELECT @JobName=Nombre FROM deleted
+	IF @JobName IN ('Administrador','Instructor','Dependiente Spa','Dependiente Tienda','Sin Asignar')
+	BEGIN
+		RAISERROR('defaultJobModification',16,1)
+		ROLLBACK TRANSACTION
+	END
+
+END
+GO
+
 --Trigger par determinar si el horario de una clase es correcto
-CREATE TRIGGER verifySchedule
+CREATE TRIGGER verifyClassSchedule
 ON Clase
 AFTER INSERT,UPDATE
 AS
@@ -1142,6 +1317,28 @@ BEGIN
 	SELECT @horaFinal=inserted.Hora_Final FROM inserted
 	
 	IF @horaInicio>@horaFinal
+	BEGIN
+
+		RAISERROR('wrongSchedule',16,1)
+		ROLLBACK TRANSACTION
+		
+	END
+
+END
+GO
+
+--Trigger par determinar si el horario de una sucursal es correcto
+CREATE TRIGGER verifyGymSchedule
+ON Sucursal_Horario
+AFTER INSERT,UPDATE
+AS
+BEGIN
+	DECLARE @horaApertura TIME(0)
+	DECLARE @horaCierre TIME(0)
+	SELECT @horaApertura=inserted.Hora_Apertura FROM inserted
+	SELECT @horaCierre=inserted.Hora_Cierre FROM inserted
+	
+	IF @horaApertura>@horaCierre
 	BEGIN
 
 		RAISERROR('wrongSchedule',16,1)
