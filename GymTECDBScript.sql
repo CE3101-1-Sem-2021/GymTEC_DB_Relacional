@@ -10,7 +10,11 @@
 --SELECT * FROM Producto_Sucursal
 --SELECT * FROM Clase
 --SELECT * FROM Tratamiento_Sucursal
-
+--SELECT * FROM Sucursal_Horario
+--SELECT * FROM Sucursal_Telefono
+--SELECT * FROM Producto
+--SELECT * FROM Maquina
+--SELECT * FROM Empleado WHERE Puesto='Administrador'
 
 CREATE TABLE Empleado
 (
@@ -296,7 +300,7 @@ BEGIN
 DELETE FROM Empleado WHERE Cedula=@Cedula
 
 END
-
+GO
 ------------------------- FIN DE LA SECCION-----------------------------------------
 
 
@@ -704,8 +708,6 @@ SELECT * FROM Clase WHERE (
 END
 GO
 
-EXEC searchClasses @Hora_Inicio=NULL,@Fecha=NULL,@Hora_Final=NULL,@Tipo_Servicio=NULL,@Sucursal='El Potro'
-
 ------------------------- FIN DE LA SECCION-----------------------------------------
 
 
@@ -988,7 +990,24 @@ DELETE FROM Tratamiento_Sucursal WHERE Id_Tratamiento=@treatmentId AND Sucursal=
 
 END
 GO
+CREATE PROCEDURE numbers
+@Sucursal VARCHAR(20)
+AS
+BEGIN
 
+DELETE FROM Sucursal_Telefono WHERE Sucursal=@Sucursal
+
+END
+GO
+CREATE PROCEDURE schedule
+@Sucursal VARCHAR(20)
+AS
+BEGIN
+
+DELETE FROM Sucursal_Horario WHERE Sucursal=@Sucursal
+
+END
+GO
 ------------------------- FIN DE LA SECCION-----------------------------------------
 
 ----------------------- GESTION DE PRODUCTOS----------------------------------
@@ -1219,13 +1238,14 @@ BEGIN
 	BEGIN
 		IF @Planilla='Pago Mensual'
 		BEGIN
-			INSERT INTO @temp(Nombre,Planilla,Cedula,Unidades,Monto) VALUES(@Nombre+' '+@Apellidos,@Cedula,@Planilla,-1,@Salario)
+			INSERT INTO @temp(Nombre,Cedula,Planilla,Unidades,Monto) VALUES(@Nombre+' '+@Apellidos,@Cedula,@Planilla,-1,@Salario)
 		END
 		ELSE
 		BEGIN
 			IF @Planilla='Pago por Horas'
 			BEGIN
 				INSERT INTO @temp(Nombre,Cedula,Planilla,Unidades,Monto) VALUES(@Nombre+' '+@Apellidos,@Cedula,@Planilla,@Horas_Trabajadas,@Horas_Trabajadas*@Salario)
+				UPDATE Empleado SET Horas_Trabajadas=0 WHERE Cedula=@Cedula
 			END
 			ELSE
 			BEGIN
@@ -1351,3 +1371,20 @@ GO
 
 
 ------------------------- FIN DE LA SECCION-----------------------------------------
+
+------------------------- VISTAS -------------------------------------------------
+
+--Vista para visualizar todos los empleados alamcenados en la base de datos
+CREATE VIEW watchAllEmployees
+AS
+	SELECT * FROM Empleado
+GO
+
+--Vista para visualizar todas las direcciones almacenadas en la base de datos
+CREATE VIEW watchAllAddresses
+AS
+	SELECT * FROM Direccion
+GO
+------------------------- FIN DE LA SECCION-----------------------------------------
+
+SELECT * FROM watchAllAddresses
